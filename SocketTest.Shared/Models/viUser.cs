@@ -1,14 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SocketTest.Shared.Models
+﻿namespace SocketTest.Shared.Models
 {
     public sealed class viUser
     {
         public int Id { get; set; }
         public string Token { get; set; }
+
+        public viUser(int id, string token)
+        {
+            Id = id;
+            Token = token;
+        }
+
+        public viUser()
+        {
+            
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using SocketTest.Database;
+using System;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -14,6 +16,15 @@ namespace SocketTest.Repository.Services
 
     public sealed class ChatService : IChatService
     {
+        private readonly ILogger<ChatService> _logger;
+        private readonly MyDbContext db;
+
+        public ChatService(MyDbContext db, ILogger<ChatService> logger)
+        {
+            this.db = db;
+            _logger = logger;
+        }
+
         public Task<string[]> GetMessagesAsync()
         {
             throw new NotImplementedException();
@@ -23,25 +34,5 @@ namespace SocketTest.Repository.Services
         {
             throw new NotImplementedException();
         }
-
-        private async Task SendPrimitive(WebSocket webSocket)
-        {
-            var buffer = new byte[1024 * 4];
-            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-
-            if (result is not null)
-            {
-                while (!result.CloseStatus.HasValue)
-                {
-                    string msg = Encoding.UTF8.GetString(new ArraySegment<byte>(buffer, 0, result.Count));
-                    await Console.Out.WriteLineAsync($"client says: {msg}");
-                    await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes($"Server says: {DateTime.Now} - Hi!")),
-                        result.MessageType, result.EndOfMessage, CancellationToken.None);
-
-                    result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);                    
-                }
-            }
-        }
-
     }
 }

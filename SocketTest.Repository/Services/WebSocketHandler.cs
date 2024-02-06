@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SocketTest.Database;
+using SocketTest.Shared.Models;
+using SocketTest.Shared.Utils;
 using System;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
@@ -18,12 +22,14 @@ namespace SocketTest.Repository.Services
     {
         private readonly IChatService chatService;
         private readonly ILogger<WebSocketHandler> _logger;
-        private readonly ConcurrentDictionary<string, WebSocket> _clients = new ConcurrentDictionary<string, WebSocket>();
+        private readonly MyDbContext db;
+        private readonly ConcurrentDictionary<int, WebSocket> _clients = new ConcurrentDictionary<int, WebSocket>();
 
-        public WebSocketHandler(IChatService chatService, ILogger<WebSocketHandler> logger)
+        public WebSocketHandler(IChatService chatService, ILogger<WebSocketHandler> logger, MyDbContext db)
         {
             this.chatService = chatService;
             this._logger = logger;
+            this.db = db;
         }
 
         public async Task HandleWebSocket(HttpContext context, WebSocket webSocket)
@@ -31,15 +37,13 @@ namespace SocketTest.Repository.Services
             try
             {
                 int senderId = int.Parse(context.User.FindFirst("Id").Value);
-
-                var clientId = context.Connection.Id.ToString(); // Уникальный идентификатор для каждого клиента
-                _clients.TryAdd(clientId, webSocket);
+                _clients.TryAdd(senderId, webSocket);
 
                 try
                 {
                     while (webSocket.State == WebSocketState.Open)
                     {
-                        var buffer = new byte[1024];
+                        var buffer = new byte[1024 * 4];
                         var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
                         if (result.MessageType == WebSocketMessageType.Close)
@@ -51,12 +55,8 @@ namespace SocketTest.Repository.Services
                         var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
                         // Определяем получателя сообщения
-                        var messageParts = message.Split(':', 2); // Первая часть - идентификатор получателя, вторая - текст сообщения
-                        var recipientId = messageParts[0];
-                        var messageText = messageParts[1];
-
-                        // Отправляем сообщение получателю
-                        await SendMessageAsync(recipientId, messageText);
+                        var model = message.FromJson<ChatModel>();
+                        await SendMessageAsync(model);
                     }
                 }
                 catch (Exception ex)
@@ -67,7 +67,7 @@ namespace SocketTest.Repository.Services
                 {
                     // Удаляем клиента из словаря при отключении
                     WebSocket dummy;
-                    _clients.TryRemove(clientId, out dummy);
+                    _clients.TryRemove(senderId, out dummy);
                 }
             }
             catch (Exception ex)
@@ -76,11 +76,11 @@ namespace SocketTest.Repository.Services
             }
         }
 
-        private async Task SendMessageAsync(string recipientId, string message)
+        private async Task SendMessageAsync(ChatModel chatModel)
         {
-            if (_clients.TryGetValue(recipientId, out var recipientWebSocket))
+            if (_clients.TryGetValue(chatModel.UserId.Value, out var recipientWebSocket))
             {
-                var buffer = Encoding.UTF8.GetBytes(message);
+                var buffer = Encoding.UTF8.GetBytes(chatModel.Message);
                 await recipientWebSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
             }
             else

@@ -36,6 +36,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SocketTest.Database\SocketTest.Database.csproj" />
     <ProjectReference Include="..\SocketTest.Repository\SocketTest.Repository.csproj" />
+    <ProjectReference Include="..\SocketTest.Shared\SocketTest.Shared.csproj" />
   </ItemGroup>
 
 </Project>

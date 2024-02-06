@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SocketTest.Database.Extensions;
 using SocketTest.Models;
 using System;
 using System.Linq;
@@ -23,6 +24,7 @@ namespace SocketTest.Database
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Seed();
 
             modelBuilder.BuildIndexesFromAnnotations();
 

@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SocketTest.Models\SocketTest.Models.csproj" />
+    <ProjectReference Include="..\SocketTest.Shared\SocketTest.Shared.csproj" />
   </ItemGroup>
 
 </Project>
