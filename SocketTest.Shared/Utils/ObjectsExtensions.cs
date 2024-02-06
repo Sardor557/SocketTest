@@ -224,11 +224,6 @@ namespace SocketTest.Shared.Utils
             return Convert.ToDouble(inVal);
         }
 
-        public static string ToClearStr(this object inParam)
-        {
-            return inParam.ToStr().ToClear();
-        }
-
         public static bool IsNullorEmpty(this object inParam)
         {
             return string.IsNullOrEmpty(inParam.ToStr().Trim());
@@ -308,18 +303,6 @@ namespace SocketTest.Shared.Utils
             }
 
             return Convert.ToDateTime(source.ToString().Replace("XX.XX", "01.01"), cultureInfo);
-        }
-
-        public static string ToPhone(this object inParam)
-        {
-            if (inParam.IsEmpty())
-            {
-                return "";
-            }
-
-            string text = inParam.ToStr().GetInt64().ToStr();
-            text = text.PadLeft(9, '0');
-            return (text.Length >= 12) ? text : (text += "998");
         }
     }
 }
